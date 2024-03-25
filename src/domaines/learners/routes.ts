@@ -111,7 +111,9 @@ router.put(
       });
       res.send({ message: "Image uploaded successfully!", imageUrl: fileUrl });
     } catch (error: any) {
-      next(error); // Passe l'erreur au middleware d'erreur suivant
+      // next(error); // Passe l'erreur au middleware d'erreur suivant
+
+      res.status(400).send(error.message);
     }
   }
 );
