@@ -9,6 +9,10 @@
 node_modules/
 node_modules_bak/
 
+
+# Dossiers public
+public/
+
 # Dossiers de build/dist
 /dist
 /build

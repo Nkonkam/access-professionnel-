@@ -17,6 +17,8 @@ app.use(morgan("combined"));
 
 app.use(express.json());
 
+app.use("/api/v1/learner/profile_picture", express.static("public/uploads"));
+
 app.use("/api/v1", router);
 
 export default app;

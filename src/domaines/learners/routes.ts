@@ -1,11 +1,12 @@
-import express, { Request, Response } from "express";
-import dotenv from "dotenv";
 import multer from "multer";
-
+import dotenv from "dotenv";
 import { upload } from "../../config/multer";
+import express, { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../../middlewares/verifyToken";
 import { authenticateUser, createNewUser } from "./controller";
 import { sendVerificationOTPEmail } from "../email_verification/controller";
+import Learner from "./model";
+import { JwtPayload } from "jsonwebtoken";
 
 dotenv.config();
 
@@ -21,6 +22,17 @@ interface PersonalInfo {
 interface DataRegister {
   password: string;
   personalInfo: PersonalInfo;
+}
+
+// Définis le type pour les informations de l'utilisateur décodées du token
+interface UserPayload extends JwtPayload {
+  userId: string;
+  email: string; // Assure-toi que cela correspond aux informations que tu stockes dans le token
+}
+
+// Étend l'interface Request pour inclure l'utilisateur
+interface RequestWithUser extends Request {
+  user?: UserPayload;
 }
 
 // Route  d' enregistrement
@@ -74,26 +86,34 @@ router.post("/auth", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Route d'enregistrement
-// router.put(
-//   "/learner/profile/upload",
-//   verifyToken,
-//   upload.single("image"),
-//   profileUpload,
-//   (
-//     error: any,
-//     req: express.Request,
-//     res: express.Response,
-//     next: express.NextFunction
-//   ) => {
-//     // Gestion des erreurs de téléchargement de Multer
-//     if (error instanceof multer.MulterError) {
-//       // Une erreur Multer s'est produite lors du téléchargement.
-//       res.status(400).send(error.message);
-//     } else {
-//       next(error);
-//     }
-//   }
-// );
+router.put(
+  "/profile_picture",
+  verifyToken,
+  upload.single("image"),
+  async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    if (!req.file) {
+      return res.status(400).send("Please upload a file.");
+    }
+
+    // Assurez-vous que l'utilisateur est défini grâce à votre middleware `verifyToken`
+    if (!req.user || !req.user.userId) {
+      return res.status(400).send("User identification failed.");
+    }
+
+    const userId = req.user.userId;
+    const fileUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/learner/profile_picture/${req.file.filename}`;
+
+    try {
+      await Learner.findByIdAndUpdate(userId, {
+        "personalInfo.image": fileUrl,
+      });
+      res.send({ message: "Image uploaded successfully!", imageUrl: fileUrl });
+    } catch (error: any) {
+      next(error); // Passe l'erreur au middleware d'erreur suivant
+    }
+  }
+);
 
 export default router;
