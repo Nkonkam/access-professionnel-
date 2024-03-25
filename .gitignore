@@ -10,8 +10,7 @@ node_modules/
 node_modules_bak/
 
 
-# Dossiers public
-public/uploads/
+
 
 # Dossiers de build/dist
 /dist
