@@ -14,6 +14,36 @@ dotenv.config();
 //   dateOfBirth: Date;
 // }
 
+interface ILearnerUpdateData {
+  // verified?: boolean;
+  // password: string;
+  personalInfo: {
+    image?: string;
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+    dateOfBirth?: Date;
+    neighborhood?: string;
+    city?: string;
+    department?: string;
+    originalDistrict?: string;
+  };
+  professionalInfo: {
+    fslc?: boolean;
+    gceOL?: boolean;
+    gceAL?: boolean;
+    phd?: boolean;
+    cep?: boolean;
+    bepc?: boolean;
+    probatoire?: boolean;
+    baccalaureat?: boolean;
+    bts?: boolean;
+    licence?: boolean;
+    master?: boolean;
+    doctorat?: boolean;
+  };
+}
+
 interface DataRegister {
   password: string;
   personalInfo: ILearner["personalInfo"];
@@ -119,7 +149,7 @@ export const createNewUser = async (
 // Fonction pour mettre à jour les informations personnelles d'un apprenant
 export const updateLearnerPersonalInfo = async (
   id: string,
-  personalInfo: ILearner["personalInfo"]
+  personalInfo: ILearnerUpdateData["personalInfo"]
 ) => {
   try {
     const update = { personalInfo };
