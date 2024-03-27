@@ -21,18 +21,17 @@ export const verifyToken = async (
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(" ")[1]; // 'Bearer TOKEN'
 
-  if (!token) {
-    throw Error("A token is required for authentication.");
-  }
-
-  const jwtSecret = process.env.TOKEN_KEY;
-  if (!jwtSecret) {
-    console.error("JWT_SECRET is not defined in the environment variables.");
-
-    throw Error("Internal server error.");
-  }
-
   try {
+    if (!token) {
+      throw new Error("A token is required for authentication.");
+    }
+
+    const jwtSecret = process.env.TOKEN_KEY;
+    if (!jwtSecret) {
+      console.error("JWT_SECRET is not defined in the environment variables.");
+
+      throw Error("Internal server error.");
+    }
     const decoded = (await verifToken(token)) as UserPayload;
     req.user = decoded;
     next();
