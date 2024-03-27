@@ -3,25 +3,30 @@ import dotenv from "dotenv";
 import { upload } from "../../config/multer";
 import express, { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../../middlewares/verifyToken";
-import { authenticateUser, createNewUser } from "./controller";
+import {
+  authenticateUser,
+  createNewUser,
+  updateLearnerPersonalInfo,
+} from "./controller";
 import { sendVerificationOTPEmail } from "../email_verification/controller";
-import Learner from "./model";
+import Learner, { ILearner } from "./model";
 import { JwtPayload } from "jsonwebtoken";
+import { Types } from "mongoose";
 
 dotenv.config();
 
 const router = express.Router();
 
-interface PersonalInfo {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  dateOfBirth: Date;
-}
+// interface PersonalInfo {
+//   fullName: string;
+//   email: string;
+//   phoneNumber: string;
+//   dateOfBirth: Date;
+// }
 
 interface DataRegister {
   password: string;
-  personalInfo: PersonalInfo;
+  personalInfo: ILearner["personalInfo"];
 }
 
 // Définis le type pour les informations de l'utilisateur décodées du token
@@ -57,7 +62,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       password,
       personalInfo: { fullName, email, phoneNumber, dateOfBirth },
     });
-    await sendVerificationOTPEmail(email);
+    // await sendVerificationOTPEmail(email);
     res.status(200).json(newUser);
   } catch (error: any) {
     res.status(400).send(error.message);
@@ -86,7 +91,8 @@ router.post("/auth", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.put(
+// Route de modification de l image
+router.patch(
   "/profile_picture",
   verifyToken,
   upload.single("image"),
@@ -113,6 +119,35 @@ router.put(
     } catch (error: any) {
       // next(error); // Passe l'erreur au middleware d'erreur suivant
 
+      res.status(400).send(error.message);
+    }
+  }
+);
+
+// Route pour modifier les informations personnelles d'un apprenant
+router.patch(
+  "/:id/personal_info",
+  verifyToken,
+  async (req: RequestWithUser, res: Response) => {
+    try {
+      const userId: string = req.params.id;
+      const personalInfo = req.body;
+
+      if (req.user?.userId != userId) {
+        return res.status(404).send("Apprenant non trouvé.");
+      }
+
+      const updatedLearner = await updateLearnerPersonalInfo(
+        userId,
+        personalInfo
+      );
+
+      if (!updatedLearner) {
+        return res.status(404).send("Apprenant non trouvé.");
+      }
+
+      res.send(updatedLearner);
+    } catch (error: any) {
       res.status(400).send(error.message);
     }
   }
