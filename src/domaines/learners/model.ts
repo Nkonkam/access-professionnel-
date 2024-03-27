@@ -2,18 +2,18 @@ import mongoose from "mongoose";
 
 // Définition de l'interface pour le document Learner
 export interface ILearner {
-  verified: boolean;
+  verified?: boolean;
   password: string;
   personalInfo: {
-    image: string;
+    image?: string;
     fullName: string;
     email: string;
     phoneNumber: string;
     dateOfBirth: Date;
-    neighborhood: string;
-    city: string;
-    department: string;
-    originalDistrict: string;
+    neighborhood?: string;
+    city?: string;
+    department?: string;
+    originalDistrict?: string;
   };
   professionalInfo: {
     fslc?: boolean;
@@ -37,7 +37,7 @@ const learnerSchema = new mongoose.Schema<ILearner>(
     verified: { type: Boolean, default: false },
     password: { type: String, required: true },
     personalInfo: {
-      image: { type: String, required: false, default: "" },
+      image: { type: String, required: false },
       fullName: { type: String, required: true },
       email: {
         type: String,
