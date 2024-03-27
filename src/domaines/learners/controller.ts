@@ -1,6 +1,4 @@
 import Type, { Document } from "mongoose";
-import bcrypt from "bcrypt";
-import jwt, { Secret } from "jsonwebtoken";
 import dotenv from "dotenv";
 import Learner, { ILearner } from "./model";
 import { hashData, verifyHashedData } from "../../utils/hashData";
@@ -9,20 +7,16 @@ import { createToken } from "../../utils/createToken";
 
 dotenv.config();
 
-interface IlearnerWithId extends ILearner {
-  _id: Type.ObjectId;
-}
-
-interface PersonalInfo {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  dateOfBirth: Date;
-}
+// interface PersonalInfo {
+//   fullName: string;
+//   email: string;
+//   phoneNumber: string;
+//   dateOfBirth: Date;
+// }
 
 interface DataRegister {
   password: string;
-  personalInfo: PersonalInfo;
+  personalInfo: ILearner["personalInfo"];
 }
 
 interface DataLogin {
@@ -118,6 +112,22 @@ export const createNewUser = async (
   } catch (error: any) {
     // Gestion des erreurs avec un niveau de détail adapté à une production sécurisée
     console.error("Error creating new user:", error.message);
+    throw error;
+  }
+};
+
+// Fonction pour mettre à jour les informations personnelles d'un apprenant
+export const updateLearnerPersonalInfo = async (
+  id: string,
+  personalInfo: ILearner["personalInfo"]
+) => {
+  try {
+    const update = { personalInfo };
+    return await Learner.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    });
+  } catch (error) {
     throw error;
   }
 };
