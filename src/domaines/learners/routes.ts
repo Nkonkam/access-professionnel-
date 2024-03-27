@@ -17,16 +17,16 @@ dotenv.config();
 
 const router = express.Router();
 
-// interface PersonalInfo {
-//   fullName: string;
-//   email: string;
-//   phoneNumber: string;
-//   dateOfBirth: Date;
-// }
+interface PersonalInfo {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth: Date;
+}
 
 interface DataRegister {
   password: string;
-  personalInfo: ILearner["personalInfo"];
+  personalInfo: PersonalInfo;
 }
 
 // Définis le type pour les informations de l'utilisateur décodées du token
