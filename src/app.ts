@@ -1,11 +1,8 @@
-import path from "path";
 import cors from "cors";
 import morgan from "morgan";
 import express from "express";
 
 import { errorHandler } from "./middlewares/errorHandler";
-
-import { verifyTokenAccessAPI } from "./middlewares/verifyTokenAccessAPI";
 
 import router from "./routes";
 
