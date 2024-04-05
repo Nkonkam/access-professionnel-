@@ -3,6 +3,12 @@ import { generateOTP } from "../../utils/generateOTP";
 import sendEmail from "../../utils/sendEmail";
 import { hashData, verifyHashedData } from "../../utils/hashData";
 import { OTP, IOTP } from "../otp/model";
+import {
+  ExpiredResourceError,
+  InternalServerError,
+  NotFoundError,
+  ValidationError,
+} from "../../utils/errorClass";
 
 interface OTPVerifyParams {
   email: string;
@@ -23,18 +29,18 @@ export const verifyOTP = async ({
   otp,
 }: OTPVerifyParams): Promise<boolean> => {
   if (!email || !otp) {
-    throw new Error("Provide values for email and otp.");
+    throw new ValidationError("Provide values for email and otp.");
   }
 
   const matchedOTPRecord = await OTP.findOne({ email });
   if (!matchedOTPRecord) {
-    throw new Error("No otp records found.");
+    throw new NotFoundError("No OTP records found.");
   }
 
   const { expiresAt } = matchedOTPRecord;
   if (expiresAt.getTime() < Date.now()) {
     await OTP.deleteOne({ email });
-    throw new Error("OTP code has expired. Request a new one.");
+    throw new ExpiredResourceError("OTP code has expired. Request a new one.");
   }
 
   const hashedOTP = matchedOTPRecord.otp;
@@ -50,7 +56,9 @@ export const sendOTP = async ({
   duration = 1,
 }: OTPSendParams): Promise<IOTP & Document> => {
   if (!email || !subject || !message) {
-    throw new Error("Provide values for email, subject, and message.");
+    throw new ValidationError(
+      "Provide values for email, subject, and message."
+    );
   }
 
   // await OTP.deleteOne({ email });
@@ -82,5 +90,11 @@ export const sendOTP = async ({
 };
 
 export const deleteOTP = async (email: string): Promise<void> => {
-  await OTP.deleteOne({ email });
+  try {
+    await OTP.deleteOne({ email });
+  } catch (error) {
+    console.error("Error deleting OTP for email:", email, error);
+    // Relance une erreur personnalisée pour permettre une gestion cohérente des erreurs dans les couches supérieures.
+    throw new InternalServerError("Internal server");
+  }
 };

@@ -1,3 +1,8 @@
+import {
+  InternalServerError,
+  NotFoundError,
+  ValidationError,
+} from "../../utils/errorClass";
 import Learner from "../learners/model";
 import { sendOTP, verifyOTP, deleteOTP } from "../otp/controller";
 
@@ -21,13 +26,10 @@ export const verifyUserEmail = async ({
     const validOTP: boolean = await verifyOTP({ email, otp });
 
     if (!validOTP) {
-      throw new Error("Invalid code passed. Check your inbox.");
+      throw new ValidationError("Invalid code passed. Check your inbox.");
     }
 
-    await Learner.updateOne(
-      { "personalInfo.email": email },
-      { verified: true }
-    );
+    await Learner.updateOne({ email }, { verified: true });
     await deleteOTP(email);
   } catch (error: unknown) {
     console.error("Error verifying user email:", error);
@@ -40,9 +42,9 @@ export const sendVerificationOTPEmail = async (
 ): Promise<string> => {
   // Remplacez `any` par un type plus spécifique
   try {
-    const existingUser = await Learner.findOne({ "personalInfo.email": email });
+    const existingUser = await Learner.findOne({ email });
     if (!existingUser) {
-      throw new Error("There's no account for the provided email.");
+      throw new NotFoundError("There's no account for the provided email.");
     }
 
     const otpDetails: OTPDetails = {
@@ -57,6 +59,9 @@ export const sendVerificationOTPEmail = async (
     return "envoie avec success";
   } catch (error: unknown) {
     console.error("Error sending verification OTP email:", error);
-    throw error;
+
+    throw new InternalServerError(
+      "An unexpected error occurred while sending the verification email."
+    );
   }
 };

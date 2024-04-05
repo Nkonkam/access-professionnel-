@@ -2,51 +2,49 @@ import Type, { Document } from "mongoose";
 import dotenv from "dotenv";
 import Learner, { ILearner } from "./model";
 import { hashData, verifyHashedData } from "../../utils/hashData";
+import {
+  NotFoundError,
+  UnauthorizedError,
+  ConflictError,
+  ValidationError,
+} from "../../utils/errorClass";
 
 import { createToken } from "../../utils/createToken";
 
 dotenv.config();
 
-// interface PersonalInfo {
-//   fullName: string;
-//   email: string;
-//   phoneNumber: string;
-//   dateOfBirth: Date;
-// }
-
-interface ILearnerUpdateData {
-  // verified?: boolean;
-  // password: string;
-  personalInfo: {
-    image?: string;
-    fullName?: string;
-    email?: string;
-    phoneNumber?: string;
-    dateOfBirth?: Date;
-    neighborhood?: string;
-    city?: string;
-    department?: string;
-    originalDistrict?: string;
-  };
-  professionalInfo: {
-    fslc?: boolean;
-    gceOL?: boolean;
-    gceAL?: boolean;
-    phd?: boolean;
-    cep?: boolean;
-    bepc?: boolean;
-    probatoire?: boolean;
-    baccalaureat?: boolean;
-    bts?: boolean;
-    licence?: boolean;
-    master?: boolean;
-    doctorat?: boolean;
-  };
-}
-
 interface DataRegister {
   password: string;
-  personalInfo: ILearner["personalInfo"];
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth: Date;
+}
+
+interface ILearnerUpdateData {
+  verified?: boolean;
+  password?: string;
+  image?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  dateOfBirth?: Date;
+  neighborhood?: string;
+  city?: string;
+  department?: string;
+  originalDistrict?: string;
+  fslc?: boolean;
+  gceOL?: boolean;
+  gceAL?: boolean;
+  phd?: boolean;
+  cep?: boolean;
+  bepc?: boolean;
+  probatoire?: boolean;
+  baccalaureat?: boolean;
+  bts?: boolean;
+  licence?: boolean;
+  master?: boolean;
+  doctorat?: boolean;
 }
 
 interface DataLogin {
@@ -65,11 +63,12 @@ export const authenticateUser = async (data: DataLogin) => {
     const { email, password, rememberMe } = data;
 
     const fetchedLearner = await Learner.findOne({
-      "personalInfo.email": email,
+      email,
     });
 
     if (!fetchedLearner) {
-      throw Error("Invalid email entered");
+      // throw Error("Invalid email entered");
+      throw new NotFoundError("Invalid email entered");
     }
     // if (!fetchedLearner.verified) {
     //   throw Error("Email hasn't been verified yet. Check your inbox");
@@ -79,7 +78,9 @@ export const authenticateUser = async (data: DataLogin) => {
     const passwordMatch = await verifyHashedData(password, hashedPassword);
 
     if (!passwordMatch) {
-      throw Error("Invalid password  entered");
+      // throw Error("Invalid password  entered");
+
+      throw new UnauthorizedError("Invalid password entered");
     }
 
     // create user token
@@ -103,18 +104,16 @@ export const createNewUser = async (
   data: DataRegister
 ): Promise<UserTokenResponse> => {
   try {
-    const {
-      password,
-      personalInfo: { fullName, email, phoneNumber, dateOfBirth },
-    } = data;
+    const { password, fullName, email, phoneNumber, dateOfBirth } = data;
 
     // Vérification de l'existence de l'apprenant
     const existingLearner = await Learner.findOne({
-      "personalInfo.email": email,
+      email,
     }).exec();
 
     if (existingLearner) {
-      throw new Error("Learner with the provided email already exists");
+      // throw new Error("Learner with the provided email already exists");
+      throw new ConflictError("Learner with the provided email already exists");
     }
 
     // Hashage du mot de passe
@@ -123,7 +122,10 @@ export const createNewUser = async (
     // Création de l'instance Learner
     const newLearner = new Learner({
       password: hashedPassword,
-      personalInfo: { fullName, email, phoneNumber, dateOfBirth },
+      fullName,
+      email,
+      phoneNumber,
+      dateOfBirth,
     });
 
     // Sauvegarde de l'apprenant dans la base de données
@@ -147,17 +149,30 @@ export const createNewUser = async (
 };
 
 // Fonction pour mettre à jour les informations personnelles d'un apprenant
-export const updateLearnerPersonalInfo = async (
+export const updateLearnerPrfile = async (
   id: string,
-  personalInfo: ILearnerUpdateData["personalInfo"]
+  personalInfo: ILearnerUpdateData
 ) => {
   try {
-    const update = { personalInfo };
-    return await Learner.findByIdAndUpdate(id, update, {
+    const update = { ...personalInfo };
+    console.log("update", update);
+
+    const updatedLearner = await Learner.findByIdAndUpdate(id, update, {
       new: true,
+      upsert: true,
       runValidators: true,
     });
-  } catch (error) {
-    throw error;
+
+    if (!updatedLearner) {
+      throw new NotFoundError(`Learner with ID ${id} not found.`);
+    }
+
+    return updatedLearner;
+  } catch (error: any) {
+    if (error.name === "ValidationError") {
+      // Convertit l'erreur de validation Mongoose en une erreur personnalisée
+      throw new ValidationError("Data validation failed");
+    }
+    throw error; // Pour les autres types d'erreurs, les relancer telles quelles
   }
 };
