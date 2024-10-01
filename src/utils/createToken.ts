@@ -12,8 +12,10 @@ interface UserPayload extends JwtPayload {
   email: string; // Assure-toi que cela correspond aux informations que tu stockes dans le token
 }
 
-const TOKEN_KEY = process.env.TOKEN_KEY ?? "your_default_secret_key";
+const TOKEN_KEY = process.env.TOKEN_KEY ?? "defaultAccessssd";
 const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY ?? "1d"; // Valeur par défaut, par exemple "1d" pour 1 jour
+
+const TOKEN_KEY_API = process.env.TOKEN_KEY_API ?? "defaultAccess";
 
 export const createToken = (
   tokenData: TokenData,
@@ -54,6 +56,27 @@ export const verifToken = async (
     }
 
     return decoded as UserPayload; // Assurez-vous que le type retourné correspond à vos données de token
+  } catch (error) {
+    console.error("Token verification failed:", error);
+
+    throw error;
+  }
+};
+
+export const verifTokenAPI = async (
+  token: string,
+  tokenKey: string = TOKEN_KEY_API
+): Promise<void> => {
+  try {
+    const decoded = jwt.verify(token, tokenKey);
+
+    if (!decoded) {
+      console.error("Token verification failed: No payload decoded.");
+
+      throw Error("Token verification failed");
+    }
+
+    // Assurez-vous que le type retourné correspond à vos données de token
   } catch (error) {
     console.error("Token verification failed:", error);
 

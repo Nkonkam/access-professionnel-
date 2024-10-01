@@ -6,6 +6,13 @@ import { errorHandler } from "./middlewares/errorHandler";
 
 import router from "./routes";
 
+import "./domaines/domaines/models";
+import "./domaines/secteurs/model";
+import "./domaines/domaines/models";
+import "./domaines/filieres/models";
+import "./domaines/specialites/model";
+import "./domaines/options/model";
+
 const app = express();
 
 app.use(

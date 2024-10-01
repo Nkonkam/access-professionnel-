@@ -181,7 +181,7 @@ router.patch(
 
       if (req.user?.userId != userId) {
         // return res.status(404).send("Apprenant non trouvé.");
-        throw new Error("Apprenant non trouvé.");
+        throw new NotFoundError("Apprenant non trouvé."); // Répéter l'utilisation de NotFoundError si nécessaire
       }
 
       const updatedLearner = await updateLearnerPrfile(userId, profileData);

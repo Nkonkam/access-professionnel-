@@ -1,4 +1,5 @@
 import nodemailer, { SendMailOptions, Transporter } from "nodemailer";
+import { InternalServerError } from "./errorClass";
 
 // Assurez-vous que les variables d'environnement sont définies
 const AUTH_EMAIL: string | undefined = process.env.AUTH_EMAIL;
@@ -6,9 +7,7 @@ const AUTH_PASS: string | undefined = process.env.AUTH_PASS;
 
 // Valider la présence des informations d'authentification
 if (!AUTH_EMAIL || !AUTH_PASS) {
-  throw new Error(
-    "Les variables d'environnement pour l'email et le mot de passe sont requises."
-  );
+  throw new InternalServerError("Internal Server");
 }
 
 // Configuration du transporteur d'email
@@ -26,6 +25,7 @@ let transport: Transporter = nodemailer.createTransport({
 transport.verify((error: Error | null, success: boolean) => {
   if (error) {
     console.error("Erreur de vérification du transporteur d'email:", error);
+    throw new InternalServerError("Internal Server");
   } else {
     console.log("Prêt à envoyer des messages.");
     console.log(success);
@@ -39,7 +39,8 @@ const sendEmail = async (mailOption: SendMailOptions): Promise<void> => {
   } catch (error: any) {
     // TypeScript 4.4+ recommande d'utiliser `unknown` ici
     console.error("Erreur lors de l'envoi de l'email:", error);
-    throw new Error("Échec de l'envoi de l'email.");
+    // throw new Error("Échec de l'envoi de l'email.");
+    throw new InternalServerError("Internal Server");
   }
 };
 
